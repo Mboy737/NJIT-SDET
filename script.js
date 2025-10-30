@@ -29,19 +29,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Smooth scrolling for navigation links
+    // Smooth scrolling for navigation links and closing menu
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetSection = document.querySelector(targetId);
-            
-            if (targetSection) {
-                const offsetTop = targetSection.offsetTop - 80; // Account for fixed navbar
-                window.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
+            const href = this.getAttribute('href');
+
+            // Close mobile menu on any link click
+            hamburger.classList.remove('active');
+            navMenu.classList.remove('active');
+
+            // Check if it's an internal link (starts with #)
+            if (href.startsWith('#')) {
+                e.preventDefault(); // Prevent default anchor jump
+                const targetSection = document.querySelector(href);
+                
+                if (targetSection) {
+                    const offsetTop = targetSection.offsetTop - 80; // Account for fixed navbar
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            } else {
+                // For external links, allow default navigation
+                // No e.preventDefault() here
             }
         });
     });
