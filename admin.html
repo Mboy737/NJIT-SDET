@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Adam's Portfolio</title>
+    
+    <!-- CSS Frameworks -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        .admin-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            padding: 2rem;
+        }
+        
+        .message-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .message-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .message-meta {
+            color: #64b5f6;
+            font-size: 0.875rem;
+        }
+        
+        .message-content {
+            color: #e8e8e8;
+            line-height: 1.6;
+        }
+        
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            background: #cc3333;
+        }
+        
+        .stats-card {
+            background: rgba(100, 181, 246, 0.1);
+            border: 1px solid rgba(100, 181, 246, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #64b5f6;
+        }
+        
+        .stats-label {
+            color: #b0b0b0;
+            margin-top: 0.5rem;
+        }
+        
+        .no-messages {
+            text-align: center;
+            color: #b0b0b0;
+            font-size: 1.2rem;
+            margin-top: 3rem;
+        }
+        
+        .back-btn {
+            background: #64b5f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        
+        .back-btn:hover {
+            background: #5a9fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="container">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Portfolio
+            </a>
+            
+            <h1 style="color: white; font-size: 2.5rem; margin-bottom: 2rem;">
+                <i class="fas fa-envelope"></i> Message Portal
+            </h1>
+            
+            <div class="stats-card">
+                <div class="stats-number" id="total-messages">0</div>
+                <div class="stats-label">Total Messages</div>
+            </div>
+            
+            <div id="messages-container">
+                <div class="no-messages" id="no-messages">
+                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+                    No messages yet. Messages from the contact form will appear here.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Message storage and management
+        class MessagePortal {
+            constructor() {
+                this.messages = this.loadMessages();
+                this.renderMessages();
+                this.updateStats();
+                this.setupAutoRefresh();
+            }
+            
+            loadMessages() {
+                const stored = localStorage.getItem('portfolio-messages');
+                return stored ? JSON.parse(stored) : [];
+            }
+            
+            saveMessages() {
+                localStorage.setItem('portfolio-messages', JSON.stringify(this.messages));
+            }
+            
+            addMessage(messageData) {
+                const message = {
+                    id: Date.now(),
+                    timestamp: new Date().toISOString(),
+                    name: messageData.name,
+                    email: messageData.email,
+                    subject: messageData.subject,
+                    message: messageData.message,
+                    read: false
+                };
+                
+                this.messages.unshift(message);
+                this.saveMessages();
+                this.renderMessages();
+                this.updateStats();
+            }
+            
+            deleteMessage(id) {
+                this.messages = this.messages.filter(msg => msg.id !== id);
+                this.saveMessages();
+                this.renderMessages();
+                this.updateStats();
+            }
+            
+            markAsRead(id) {
+                const message = this.messages.find(msg => msg.id === id);
+                if (message) {
+                    message.read = true;
+                    this.saveMessages();
+                    this.renderMessages();
+                }
+            }
+            
+            renderMessages() {
+                const container = document.getElementById('messages-container');
+                const noMessages = document.getElementById('no-messages');
+                
+                if (this.messages.length === 0) {
+                    noMessages.style.display = 'block';
+                    return;
+                }
+                
+                noMessages.style.display = 'none';
+                
+                container.innerHTML = this.messages.map(msg => `
+                    <div class="message-card ${msg.read ? 'opacity-75' : ''}" onclick="portal.markAsRead(${msg.id})">
+                        <div class="message-header">
+                            <div>
+                                <h3 style="color: white; margin: 0; font-size: 1.2rem;">${msg.subject}</h3>
+                                <div class="message-meta">
+                                    From: ${msg.name} (${msg.email})
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="message-meta">${this.formatDate(msg.timestamp)}</div>
+                                <button class="delete-btn" onclick="event.stopPropagation(); portal.deleteMessage(${msg.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            ${msg.message.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            updateStats() {
+                document.getElementById('total-messages').textContent = this.messages.length;
+            }
+            
+            formatDate(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            }
+            
+            setupAutoRefresh() {
+                // Check for new messages every 5 seconds
+                setInterval(() => {
+                    const currentMessages = this.loadMessages();
+                    if (currentMessages.length !== this.messages.length) {
+                        this.messages = currentMessages;
+                        this.renderMessages();
+                        this.updateStats();
+                    }
+                }, 5000);
+            }
+            
+            clearAllMessages() {
+                if (confirm('Are you sure you want to delete all messages?')) {
+                    this.messages = [];
+                    this.saveMessages();
+                    this.renderMessages();
+                    this.updateStats();
+                }
+            }
+        }
+        
+        // Initialize portal
+        const portal = new MessagePortal();
+        
+        // Add clear all button
+        const clearAllBtn = document.createElement('button');
+        clearAllBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear All Messages';
+        clearAllBtn.style.cssText = `
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 1rem;
+            transition: all 0.3s ease;
+        `;
+        clearAllBtn.onclick = () => portal.clearAllMessages();
+        
+        document.querySelector('.back-btn').parentNode.appendChild(clearAllBtn);
+        
+        // Listen for messages from contact form
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'portfolio-messages') {
+                portal.messages = portal.loadMessages();
+                portal.renderMessages();
+                portal.updateStats();
+            }
+        });
+        
+        // Expose portal globally for contact form
+        window.messagePortal = portal;
+    </script>
+</body>
+</html>
